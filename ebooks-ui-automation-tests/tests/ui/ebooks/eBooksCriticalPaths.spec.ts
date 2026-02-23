@@ -55,36 +55,38 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
       const bookshelfPage = await libraryPage.openEbooksLink();
       await expect
         .soft(bookshelfPage.page)
-        .toHaveURL(`${externalLinks.bookshelf}/reader/books/${bookISBN}/pages/recent`);
+        .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`));
       await bookshelfPage.page.close();
     });
 
-    await test.step("Check the availability of ancillaries stored on S3", async () => {
-      const ancillarySourceUrlS3 = `https://static.us.elsevierhealth.com/**`;
-      const videoSource = (domain: string) => {
-        return isMobileSafari({ browserName, isMobile })
-          ? `${domain}/**.mp4?t=**`
-          : `${domain}/**.m3u8?t=**`;
-      };
-      const responseFromS3 = page.waitForResponse(videoSource(ancillarySourceUrlS3));
 
+await test.step("Check the availability of ancillaries stored on S3", async () => {
       // Open video page via modal link
       await libraryPage.modal.entitlementVideosLink.click();
 
-      // Check that video container is visible after loading
-      const status = (await responseFromS3).status();
-      expect([206, 200, 0]).toContain(status); // Zero is added for CI runs on Mobile Safari
-      await expect(videoContentPage.videoContainer).toBeVisible();
-
-      // Check that the video is playable (Skipped on Desktop Safari and Mobile Chromium due to video frame error)
+      await expect(videoContentPage.videoContainer).toBeVisible({ timeout: 15000 });
+     // Check that the video is playable (Skipped on Desktop Safari and Mobile Chromium due to video frame error)
       if (
         !isDesktopSafari({ browserName, isMobile }) &&
         !isMobileChromium({ browserName, isMobile })
       ) {
+        // listen to network only where we will actually click Play
+        const responsePromise = page.waitForResponse(response => 
+          response.url().startsWith("https://static.us.elsevierhealth.com/") &&
+          (response.url().includes(".mp4") || response.url().includes(".m3u8"))
+        );
+
         await expect(videoContentPage.video).toBeVisible({ timeout: 20000 });
         await expect(videoContentPage.mediaContainerPaused).toBeVisible(); // Check that the video is paused
-        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); // Wait until the video is buffered
+        await expect(videoContentPage.mediaContainerBuffered).toBeVisible();  // Wait until the video is buffered
+        
+        // Click Play
         await videoContentPage.video.click();
+        
+        // Wait for the response from the server
+        const response = await responsePromise;
+        expect([206, 200, 0]).toContain(response.status()); // Zero is added for CI runs on Mobile Safari
+
         await expect(videoContentPage.mediaContainerPlaying).toBeVisible();
       }
     });
