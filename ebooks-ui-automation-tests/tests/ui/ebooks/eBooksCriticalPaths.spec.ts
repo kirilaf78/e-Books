@@ -40,8 +40,8 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
 
     await test.step("Sign in and check that library is shown", async () => {
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
@@ -110,7 +110,7 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
     await test.step("Check user info content", async () => {
       await imageContentPage.header.userInfoButton.click();
       await expect(imageContentPage.header.dropdownContanerFirstItem).toHaveText(
-        users.ebooks_username_1
+        users.standard.username
       );
     });
 

@@ -22,8 +22,8 @@ test.describe("UI: eBooks+ Smoke Tests @ui @smoke @ebooks", () => {
 
     await test.step("User accepts cookies and signs in", async () => {
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.emptyLibrary.username,
+        users.emptyLibrary.password
       );
     });
 
