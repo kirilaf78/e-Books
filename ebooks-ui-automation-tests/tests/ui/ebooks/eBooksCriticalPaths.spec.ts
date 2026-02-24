@@ -64,10 +64,11 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
       await libraryPage.modal.entitlementVideosLink.click();
 
       await expect(videoContentPage.videoContainer).toBeVisible({ timeout: 15000 });
-      // Check that the video is playable (Skipped on Desktop Safari and Mobile Chromium due to video frame error)
+      // Check that the video is playable (Skipped on Safari and Mobile Chromium due to video frame error)
       if (
         !isDesktopSafari({ browserName, isMobile }) &&
-        !isMobileChromium({ browserName, isMobile })
+        !isMobileChromium({ browserName, isMobile }) &&
+        !isMobileSafari({ browserName, isMobile })
       ) {
         // Listen to network and catch ONLY successful video responses (ignoring 401)
         const responsePromise = page.waitForResponse((response) => {
