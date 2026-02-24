@@ -52,6 +52,7 @@ export class AudioContentPage extends ContentPage {
   readonly audio: Locator;
   readonly audioTitle: Locator;
   readonly audioSource: Locator;
+  readonly playButton: Locator;
 
   constructor(page: Page) {
     super(page);
@@ -59,6 +60,7 @@ export class AudioContentPage extends ContentPage {
     this.audio = page.locator("audio");
     this.audioTitle = page.locator(".audio-title");
     this.audioSource = page.locator(".audio-source");
+    this.playButton = page.getByRole("button", { name: /play/i });
   }
 }
 

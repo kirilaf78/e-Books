@@ -129,14 +129,18 @@ test.describe("Audio Content @ui @ebooks @nrt @audiocontent", () => {
         await expect(audioContentPage.mediaContainerBuffered).toBeVisible();
       });
 
-      await test.step("Click on the audio frame", async () => {
-        // Clicking with coordinates according to media player specifics
-        const clickingPosition = isDesktopSafari({ browserName, isMobile })
-          ? { x: 50, y: 45 }
-          : isMobileSafari({ browserName, isMobile })
-            ? { x: 22, y: 43 }
-            : { x: 28, y: 38 };
-        await audioContentPage.audio.click({ position: clickingPosition });
+      // await test.step("Click on the audio frame", async () => {
+      //   // Clicking with coordinates according to media player specifics
+      //   const clickingPosition = isDesktopSafari({ browserName, isMobile })
+      //     ? { x: 50, y: 45 }
+      //     : isMobileSafari({ browserName, isMobile })
+      //       ? { x: 22, y: 43 }
+      //       : { x: 28, y: 38 };
+      //   await audioContentPage.audio.click({ position: clickingPosition });
+      // });
+
+      await test.step("Click on the audio play button", async () => {
+        await audioContentPage.playButton.click();
       });
 
       await test.step("Check that audio is playing", async (step) => {
