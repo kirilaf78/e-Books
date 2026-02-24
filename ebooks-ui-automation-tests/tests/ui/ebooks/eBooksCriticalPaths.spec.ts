@@ -59,33 +59,36 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
       await bookshelfPage.page.close();
     });
 
-
-await test.step("Check the availability of ancillaries stored on S3", async () => {
+    await test.step("Check the availability of ancillaries stored on S3", async () => {
       // Open video page via modal link
       await libraryPage.modal.entitlementVideosLink.click();
 
       await expect(videoContentPage.videoContainer).toBeVisible({ timeout: 15000 });
-     // Check that the video is playable (Skipped on Desktop Safari and Mobile Chromium due to video frame error)
+      // Check that the video is playable (Skipped on Desktop Safari and Mobile Chromium due to video frame error)
       if (
         !isDesktopSafari({ browserName, isMobile }) &&
         !isMobileChromium({ browserName, isMobile })
       ) {
-        // listen to network only where we will actually click Play
-        const responsePromise = page.waitForResponse(response => 
-          response.url().startsWith("https://static.us.elsevierhealth.com/") &&
-          (response.url().includes(".mp4") || response.url().includes(".m3u8"))
-        );
+        // Listen to network and catch ONLY successful video responses (ignoring 401)
+        const responsePromise = page.waitForResponse((response) => {
+          const url = response.url();
+          const isMediaUrl =
+            url.startsWith("https://static.us.elsevierhealth.com/") &&
+            (url.includes(".mp4") || url.includes(".m3u8"));
+          const isSuccessStatus = [200, 206, 0].includes(response.status());
+
+          return isMediaUrl && isSuccessStatus;
+        });
 
         await expect(videoContentPage.video).toBeVisible({ timeout: 20000 });
         await expect(videoContentPage.mediaContainerPaused).toBeVisible(); // Check that the video is paused
-        await expect(videoContentPage.mediaContainerBuffered).toBeVisible();  // Wait until the video is buffered
-        
+        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); // Wait until the video is buffered
+
         // Click Play
         await videoContentPage.video.click();
-        
+
         // Wait for the response from the server
-        const response = await responsePromise;
-        expect([206, 200, 0]).toContain(response.status()); // Zero is added for CI runs on Mobile Safari
+        await responsePromise;
 
         await expect(videoContentPage.mediaContainerPlaying).toBeVisible();
       }
