@@ -1,5 +1,11 @@
 import { defineConfig, devices } from "@playwright/test";
+import * as dotenv from 'dotenv';
+import * as path from 'path';
 
+process.env.TEST_ENV = process.env.TEST_ENV || "prod";
+dotenv.config({ 
+  path: path.resolve(__dirname, `env/.env.${process.env.TEST_ENV}`) 
+});
 // Monocart-reporter custom columns
 const ohceColumns = (defaultColumns: unknown[]) => {
   const columnsToBeRemoved = ["type", "retry", "expectedStatus", "status", "outcome"];
