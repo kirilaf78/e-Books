@@ -60,44 +60,46 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
     });
 
 await test.step("Check the availability of ancillaries stored on S3", async () => {
-      // 1. Before clicking the video link, set up a network listener to catch the response from S3
-      // Added status 304 in case the video is served from the cache during repeated runs
-      const responsePromise = page.waitForResponse((response) => {
-        const url = response.url();
-        const isMediaUrl =
-          url.startsWith("https://static.us.elsevierhealth.com/") &&
-          (url.includes(".mp4") || url.includes(".m3u8"));
-        const isSuccessStatus = [200, 206, 304, 0].includes(response.status());
-
-        return isMediaUrl && isSuccessStatus;
-      });
-
-      // 2. Open the video page (this action triggers the network request to S3)
-      await libraryPage.modal.entitlementVideosLink.click();
-
-      // Wait for the interface to appear
-      await expect(videoContentPage.videoContainer).toBeVisible({ timeout: 15000 });
-
-      // Проверяем, что видео работает (пропускаем на Safari и Mobile Chromium)
-      if (
+      // 1. Define if we need to check the player in the current browser
+      const shouldCheckVideo =
         !isDesktopSafari({ browserName, isMobile }) &&
         !isMobileChromium({ browserName, isMobile }) &&
-        !isMobileSafari({ browserName, isMobile })
-      ) {
-        await expect(videoContentPage.video).toBeVisible({ timeout: 20000 });
-        await expect(videoContentPage.mediaContainerPaused).toBeVisible(); // Check that the video is paused
-        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); // Wait for buffering
+        !isMobileSafari({ browserName, isMobile });
 
-        // 3. Force the video to play using JavaScript (eliminating unstable clicks)
+      let responsePromise;
+
+      // 2. Set a network listener ONLY if we are not skipping the player check
+      if (shouldCheckVideo) {
+        responsePromise = page.waitForResponse((response) => {
+          const url = response.url();
+          const isMediaUrl =
+            url.startsWith("https://static.us.elsevierhealth.com/") &&
+            (url.includes(".mp4") || url.includes(".m3u8"));
+          const isSuccessStatus = [200, 206, 304, 0].includes(response.status());
+
+          return isMediaUrl && isSuccessStatus;
+        });
+      }
+
+      // 3. Open the video page
+      await libraryPage.modal.entitlementVideosLink.click();
+      await expect(videoContentPage.videoContainer).toBeVisible({ timeout: 15000 });
+
+      // 4. Check the player and wait for the network (only where supported)
+      if (shouldCheckVideo) {
+        await expect(videoContentPage.video).toBeVisible({ timeout: 20000 });
+        await expect(videoContentPage.mediaContainerPaused).toBeVisible(); 
+        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); 
+
+        // Native video play
         await videoContentPage.video.evaluate((element: HTMLMediaElement) => element.play());
 
-        // 4. Wait for the response from the server (or cache), which we started listening to in step 1
+        // Wait for the response from the server (or cache), which we started listening to in step 1
         await responsePromise;
 
         await expect(videoContentPage.mediaContainerPlaying).toBeVisible();
       }
     });
-
     await test.step("Go to 'Home' page via breadcrumbs menu", async () => {
       await videoContentPage.header.breadcrumbsMenu.link.filter({ hasText: "Home" }).click();
     });
