@@ -140,7 +140,8 @@ test.describe("Audio Content @ui @ebooks @nrt @audiocontent", () => {
       // });
 
       await test.step("Click on the audio play button", async () => {
-        await audioContentPage.playButton.click();
+        // Because it's a native browser player, we start it via JS API
+        await audioContentPage.audio.evaluate((element: HTMLMediaElement) => element.play());
       });
 
       await test.step("Check that audio is playing", async (step) => {
