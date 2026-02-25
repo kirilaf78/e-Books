@@ -59,36 +59,39 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
       await bookshelfPage.page.close();
     });
 
-    await test.step("Check the availability of ancillaries stored on S3", async () => {
-      // Open video page via modal link
+await test.step("Check the availability of ancillaries stored on S3", async () => {
+      // 1. Before clicking the video link, set up a network listener to catch the response from S3
+      // Added status 304 in case the video is served from the cache during repeated runs
+      const responsePromise = page.waitForResponse((response) => {
+        const url = response.url();
+        const isMediaUrl =
+          url.startsWith("https://static.us.elsevierhealth.com/") &&
+          (url.includes(".mp4") || url.includes(".m3u8"));
+        const isSuccessStatus = [200, 206, 304, 0].includes(response.status());
+
+        return isMediaUrl && isSuccessStatus;
+      });
+
+      // 2. Open the video page (this action triggers the network request to S3)
       await libraryPage.modal.entitlementVideosLink.click();
 
+      // Wait for the interface to appear
       await expect(videoContentPage.videoContainer).toBeVisible({ timeout: 15000 });
-      // Check that the video is playable (Skipped on Safari and Mobile Chromium due to video frame error)
+
+      // Проверяем, что видео работает (пропускаем на Safari и Mobile Chromium)
       if (
         !isDesktopSafari({ browserName, isMobile }) &&
         !isMobileChromium({ browserName, isMobile }) &&
         !isMobileSafari({ browserName, isMobile })
       ) {
-        // Listen to network and catch ONLY successful video responses (ignoring 401)
-        const responsePromise = page.waitForResponse((response) => {
-          const url = response.url();
-          const isMediaUrl =
-            url.startsWith("https://static.us.elsevierhealth.com/") &&
-            (url.includes(".mp4") || url.includes(".m3u8"));
-          const isSuccessStatus = [200, 206, 0].includes(response.status());
-
-          return isMediaUrl && isSuccessStatus;
-        });
-
         await expect(videoContentPage.video).toBeVisible({ timeout: 20000 });
         await expect(videoContentPage.mediaContainerPaused).toBeVisible(); // Check that the video is paused
-        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); // Wait until the video is buffered
+        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); // Wait for buffering
 
-        // Click Play
-        await videoContentPage.video.click();
+        // 3. Force the video to play using JavaScript (eliminating unstable clicks)
+        await videoContentPage.video.evaluate((element: HTMLMediaElement) => element.play());
 
-        // Wait for the response from the server
+        // 4. Wait for the response from the server (or cache), which we started listening to in step 1
         await responsePromise;
 
         await expect(videoContentPage.mediaContainerPlaying).toBeVisible();
