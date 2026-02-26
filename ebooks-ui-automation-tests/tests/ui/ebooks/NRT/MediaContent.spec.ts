@@ -35,8 +35,8 @@ test.describe("Video Content @ui @ebooks @nrt @videocontent", () => {
       await test.step("Sign in and check the library", async () => {
         await page.goto(process.env.EBOOKS_BASEURL);
         await eBooksSignInPage.acceptCookiesAndSignIn(
-          users.ebooks_username_1,
-          users.ebooks_password_1
+          users.standard.username,
+          users.standard.password
         );
         await expect(libraryPage.entitlementlist).toBeVisible();
       });
@@ -68,8 +68,8 @@ test.describe("Video Content @ui @ebooks @nrt @videocontent", () => {
       await test.step("Sign in and check the library", async () => {
         await page.goto(process.env.EBOOKS_BASEURL);
         await eBooksSignInPage.acceptCookiesAndSignIn(
-          users.ebooks_username_1,
-          users.ebooks_password_1
+          users.standard.username,
+          users.standard.password
         );
         await expect(libraryPage.entitlementlist).toBeVisible();
       });
@@ -109,8 +109,8 @@ test.describe("Audio Content @ui @ebooks @nrt @audiocontent", () => {
       await test.step("Sign in and check the library", async () => {
         await page.goto(process.env.EBOOKS_BASEURL);
         await eBooksSignInPage.acceptCookiesAndSignIn(
-          users.ebooks_username_1,
-          users.ebooks_password_1
+          users.standard.username,
+          users.standard.password
         );
         await expect(libraryPage.entitlementlist).toBeVisible();
       });
@@ -129,14 +129,19 @@ test.describe("Audio Content @ui @ebooks @nrt @audiocontent", () => {
         await expect(audioContentPage.mediaContainerBuffered).toBeVisible();
       });
 
-      await test.step("Click on the audio frame", async () => {
-        // Clicking with coordinates according to media player specifics
-        const clickingPosition = isDesktopSafari({ browserName, isMobile })
-          ? { x: 50, y: 45 }
-          : isMobileSafari({ browserName, isMobile })
-            ? { x: 22, y: 43 }
-            : { x: 28, y: 38 };
-        await audioContentPage.audio.click({ position: clickingPosition });
+      // await test.step("Click on the audio frame", async () => {
+      //   // Clicking with coordinates according to media player specifics
+      //   const clickingPosition = isDesktopSafari({ browserName, isMobile })
+      //     ? { x: 50, y: 45 }
+      //     : isMobileSafari({ browserName, isMobile })
+      //       ? { x: 22, y: 43 }
+      //       : { x: 28, y: 38 };
+      //   await audioContentPage.audio.click({ position: clickingPosition });
+      // });
+
+      await test.step("Click on the audio play button", async () => {
+        // Because it's a native browser player, we start it via JS API
+        await audioContentPage.audio.evaluate((element: HTMLMediaElement) => element.play());
       });
 
       await test.step("Check that audio is playing", async (step) => {

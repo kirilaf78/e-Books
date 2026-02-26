@@ -37,8 +37,8 @@ test.describe("UI: eBooks+ Error Page tests @ui @ebooks @nrt @errorpage", () => 
 
     await test.step("Sign in and check that library is shown", async () => {
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });

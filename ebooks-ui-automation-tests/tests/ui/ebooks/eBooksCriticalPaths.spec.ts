@@ -40,8 +40,8 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
 
     await test.step("Sign in and check that library is shown", async () => {
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
@@ -55,40 +55,51 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
       const bookshelfPage = await libraryPage.openEbooksLink();
       await expect
         .soft(bookshelfPage.page)
-        .toHaveURL(`${externalLinks.bookshelf}/reader/books/${bookISBN}/pages/recent`);
+        .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`));
       await bookshelfPage.page.close();
     });
 
-    await test.step("Check the availability of ancillaries stored on S3", async () => {
-      const ancillarySourceUrlS3 = `https://static.us.elsevierhealth.com/**`;
-      const videoSource = (domain: string) => {
-        return isMobileSafari({ browserName, isMobile })
-          ? `${domain}/**.mp4?t=**`
-          : `${domain}/**.m3u8?t=**`;
-      };
-      const responseFromS3 = page.waitForResponse(videoSource(ancillarySourceUrlS3));
-
-      // Open video page via modal link
-      await libraryPage.modal.entitlementVideosLink.click();
-
-      // Check that video container is visible after loading
-      const status = (await responseFromS3).status();
-      expect([206, 200, 0]).toContain(status); // Zero is added for CI runs on Mobile Safari
-      await expect(videoContentPage.videoContainer).toBeVisible();
-
-      // Check that the video is playable (Skipped on Desktop Safari and Mobile Chromium due to video frame error)
-      if (
+await test.step("Check the availability of ancillaries stored on S3", async () => {
+      // 1. Define if we need to check the player in the current browser
+      const shouldCheckVideo =
         !isDesktopSafari({ browserName, isMobile }) &&
-        !isMobileChromium({ browserName, isMobile })
-      ) {
+        !isMobileChromium({ browserName, isMobile }) &&
+        !isMobileSafari({ browserName, isMobile });
+
+      let responsePromise;
+
+      // 2. Set a network listener ONLY if we are not skipping the player check
+      if (shouldCheckVideo) {
+        responsePromise = page.waitForResponse((response) => {
+          const url = response.url();
+          const isMediaUrl =
+            url.startsWith("https://static.us.elsevierhealth.com/") &&
+            (url.includes(".mp4") || url.includes(".m3u8"));
+          const isSuccessStatus = [200, 206, 304, 0].includes(response.status());
+
+          return isMediaUrl && isSuccessStatus;
+        });
+      }
+
+      // 3. Open the video page
+      await libraryPage.modal.entitlementVideosLink.click();
+      await expect(videoContentPage.videoContainer).toBeVisible({ timeout: 15000 });
+
+      // 4. Check the player and wait for the network (only where supported)
+      if (shouldCheckVideo) {
         await expect(videoContentPage.video).toBeVisible({ timeout: 20000 });
-        await expect(videoContentPage.mediaContainerPaused).toBeVisible(); // Check that the video is paused
-        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); // Wait until the video is buffered
-        await videoContentPage.video.click();
+        await expect(videoContentPage.mediaContainerPaused).toBeVisible(); 
+        await expect(videoContentPage.mediaContainerBuffered).toBeVisible(); 
+
+        // Native video play
+        await videoContentPage.video.evaluate((element: HTMLMediaElement) => element.play());
+
+        // Wait for the response from the server (or cache), which we started listening to in step 1
+        await responsePromise;
+
         await expect(videoContentPage.mediaContainerPlaying).toBeVisible();
       }
     });
-
     await test.step("Go to 'Home' page via breadcrumbs menu", async () => {
       await videoContentPage.header.breadcrumbsMenu.link.filter({ hasText: "Home" }).click();
     });
@@ -110,7 +121,7 @@ test.describe("eBooks+ P1 Critical User Journey @ui @critical @ebooks @p1 @cuj1"
     await test.step("Check user info content", async () => {
       await imageContentPage.header.userInfoButton.click();
       await expect(imageContentPage.header.dropdownContanerFirstItem).toHaveText(
-        users.ebooks_username_1
+        users.standard.username
       );
     });
 

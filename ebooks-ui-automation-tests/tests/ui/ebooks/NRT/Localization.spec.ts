@@ -55,7 +55,7 @@ test.describe("UI: eBooks+ Localization feature @ui @ebooks @nrt @localization",
     });
 
     await test.step("Sign In", async () => {
-      await eBooksSignInPage.signIn(users.ebooks_username_1, users.ebooks_password_1);
+      await eBooksSignInPage.signIn(users.standard.username, users.standard.password);
     });
 
     await test.step("Check that the Library page header is displayed in German", async () => {

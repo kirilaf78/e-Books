@@ -42,8 +42,8 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
@@ -171,8 +171,8 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
@@ -250,8 +250,8 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
@@ -407,8 +407,8 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });

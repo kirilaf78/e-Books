@@ -20,8 +20,8 @@ test.describe("My Account Page @ui @ebooks @nrt @myaccount", () => {
 
     await test.step("User accepts cookies and logs in", async () => {
       await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.ebooks_username_1,
-        users.ebooks_password_1
+        users.standard.username,
+        users.standard.password
       );
     });
 
