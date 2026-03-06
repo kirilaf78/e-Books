@@ -1,9 +1,11 @@
 import { books } from "@constants/books";
+import { externalLinks } from "@constants/externalLinks";
 import { users } from "@constants/users";
 import { wording } from "@constants/wording";
 import { expect, test } from "@fixtures/pagesFixture";
 import AutoUserOperations from "@helpers/AutoUserOperations";
 import { isMobileSafari } from "@helpers/testConditions";
+import { Page } from "@playwright/test";
 
 test.use({
   launchOptions: { slowMo: 500 }
@@ -13,6 +15,7 @@ const bookWithVideoByChapters = books["Diagnostic Ultrasound"];
 const bookWithAudioNoChapters = books["Deutsch B1/B2 in der Pflege"];
 const bookWithImagesDefaultChapter = books["Neurología"];
 const bookWithPdfNoChapters = books["Deutsch B1/B2 in der Pflege"];
+const bookWithEBook = books["Diagnostic Ultrasound"];
 
 const videoPageUrl = `${process.env.EBOOKS_BASEURL}${bookWithVideoByChapters.vbid}/video/chapters?chapterPii=${bookWithVideoByChapters.getChapterPii()}&id=${process.env.VIDEO_ID}`;
 const ancillarySourceUrlCW = `https://coursewareobjects.elsevier.com/**`;
@@ -474,6 +477,55 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
     await test.step("Check that media list error frame is shown", async () => {
       await expect(pdfContentPage.mediaListErrorFrame).toBeVisible();
+    });
+  });
+
+test("eBook page @ebookpage", async ({ eBooksSignInPage, libraryPage, page, context }) => {
+    let newPage: Page;
+
+    await test.step("Sign in", async () => {
+      await page.goto(process.env.EBOOKS_BASEURL);
+      await eBooksSignInPage.acceptCookiesAndSignIn(
+        users.standard.username,
+        users.standard.password
+      );
+      await expect(libraryPage.entitlementlist).toBeVisible();
+    });
+
+    const bookISBN = await test.step("Open eBook", async () => {
+      const entitlement = libraryPage.entitlementItem.filter({
+        hasText: bookWithEBook.title
+      });
+      const isbn = await entitlement.getAttribute("id");
+      await entitlement.click();
+      return isbn;
+    });
+
+    await test.step("Click on the eBook link and verify Bookshelf redirection", async () => {
+      const pagePromise = context.waitForEvent("page");
+      await libraryPage.modal.entitlementEbookLink.click();
+      
+      newPage = await pagePromise;
+      await expect
+        .soft(newPage)
+        .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`));
+    });
+
+    await test.step("Verify Expand all and Collapse all features in Bookshelf", async () => {
+      const tocPanel = newPage.locator("nav[aria-label='Table of Contents']");
+      await expect(tocPanel).toBeVisible();
+
+      const expandAllButton = newPage.getByRole("button", { name: /expand all/i });
+      await expandAllButton.click();
+      await expect(tocPanel.locator("[aria-expanded='true']").first()).toBeVisible();
+
+      const collapseAllButton = newPage.getByRole("button", { name: /collapse all/i });
+      await collapseAllButton.click();
+      await expect(tocPanel.locator("[aria-expanded='true']")).toHaveCount(1);
+    });
+
+    await test.step("Close Bookshelf tab", async () => {
+      await newPage.close();
     });
   });
 });
