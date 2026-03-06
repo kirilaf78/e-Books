@@ -480,7 +480,13 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-test("eBook page @ebookpage", async ({ eBooksSignInPage, libraryPage, page, context }) => {
+  test("eBook page @ebookpage", async ({
+    eBooksSignInPage,
+    libraryPage,
+    page,
+    context,
+    isMobile
+  }) => {
     let newPage: Page;
 
     await test.step("Sign in", async () => {
@@ -504,14 +510,36 @@ test("eBook page @ebookpage", async ({ eBooksSignInPage, libraryPage, page, cont
     await test.step("Click on the eBook link and verify Bookshelf redirection", async () => {
       const pagePromise = context.waitForEvent("page");
       await libraryPage.modal.entitlementEbookLink.click();
-      
+
       newPage = await pagePromise;
       await expect
         .soft(newPage)
         .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`));
+
+      // on mobile the book title is hidden in the menu, so we only check it on desktop
+      if (!isMobile) {
+        await expect(
+          newPage.getByRole("heading", { name: bookWithEBook.title }).first()
+        ).toBeVisible();
+      }
     });
 
-    await test.step("Verify Expand all and Collapse all features in Bookshelf", async () => {
+    // quick content check only for mobile devices
+    await test.step("Verify that the eBook content is loaded (Mobile only)", async (step) => {
+      step.skip(!isMobile, "Skip on desktop, full navigation is checked in subsequent steps");
+
+      const readerFrame = newPage
+        .frameLocator('iframe[title="Document reading pane"]')
+        .frameLocator("iframe");
+
+      await expect(
+        readerFrame.getByRole("heading", { name: "Physics of Ultrasound" })
+      ).toBeVisible();
+    });
+
+    await test.step("Verify Expand all and Collapse all features in Bookshelf", async (step) => {
+      step.skip(isMobile, "Skip on mobile, as the Table of Contents sidebar is hidden by default");
+
       const tocPanel = newPage.locator("nav[aria-label='Table of Contents']");
       await expect(tocPanel).toBeVisible();
 
@@ -521,7 +549,40 @@ test("eBook page @ebookpage", async ({ eBooksSignInPage, libraryPage, page, cont
 
       const collapseAllButton = newPage.getByRole("button", { name: /collapse all/i });
       await collapseAllButton.click();
-      await expect(tocPanel.locator("[aria-expanded='true']")).toHaveCount(1);
+
+      // wait for the number of expanded elements to become 0 (clean launch) or 1 (saved progress)
+      await expect(async () => {
+        const count = await tocPanel.locator("[aria-expanded='true']").count();
+        expect(count).toBeLessThanOrEqual(1);
+      }).toPass({ timeout: 10000 });
+    });
+
+    await test.step("Verify chapter title synchronization and sub-chapter navigation", async (step) => {
+      step.skip(isMobile, "Skip on mobile, as the Table of Contents sidebar is hidden by default");
+
+      const tocPanel = newPage.locator("nav[aria-label='Table of Contents']");
+      const readerFrame = newPage
+        .frameLocator('iframe[title="Document reading pane"]')
+        .frameLocator("iframe");
+
+      const expandAllButton = tocPanel.getByRole("button", { name: /expand all/i });
+      await expandAllButton.click();
+
+      const chapter1Link = tocPanel.getByRole("button", {
+        name: /Go to Chapter 1 Physics of/i
+      });
+      await chapter1Link.click();
+
+      await expect(
+        readerFrame.getByRole("heading", { name: "Physics of Ultrasound" })
+      ).toBeVisible();
+
+      const instrumentation = tocPanel.getByText("Instrumentation", { exact: true });
+      await instrumentation.click();
+
+      await expect(
+        readerFrame.getByRole("heading", { name: "Instrumentation", exact: true })
+      ).toBeVisible();
     });
 
     await test.step("Close Bookshelf tab", async () => {
