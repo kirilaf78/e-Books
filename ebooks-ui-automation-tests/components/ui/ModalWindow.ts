@@ -23,6 +23,7 @@ export default class ModalWindow {
   readonly entitlementImagesLink: Locator;
   readonly entitlementPDFFilesLink: Locator;
   readonly entitlementDocumentsLink: Locator;
+  readonly entitlementExternalLinksLink: Locator;
   readonly description: Locator; //Migration Settings Modal
   readonly homeButton: Locator; //Migration Settings Modal
   readonly removeButton: Locator; //Migration Settings Modal
@@ -45,6 +46,9 @@ export default class ModalWindow {
     this.entitlementImagesLink = this.entitlementContentLink.filter({ hasText: "Images" });
     this.entitlementPDFFilesLink = this.entitlementContentLink.filter({ hasText: "PDF Files" });
     this.entitlementDocumentsLink = this.entitlementContentLink.filter({ hasText: "Documents" });
+    this.entitlementExternalLinksLink = this.entitlementContentLink.filter({
+      hasText: "External links"
+    });
 
     // User Status Update
     this.viewResultButton = this.frame.locator("//button[contains(text(), 'View Result')]");

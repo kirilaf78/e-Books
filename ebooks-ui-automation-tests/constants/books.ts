@@ -78,6 +78,10 @@ export const books = {
     title: "Pflege Heute",
     isbns: ["9783437267246"]
   },
+  "Macleod. Exploración clínica": {
+    title: "Macleod. Exploración clínica",
+    isbns: ["9788490225424"]
+  },
   "Actividad física aplicada a la osteoporosis": {
     title: "Actividad física aplicada a la osteoporosis",
     isbns: ["9788490225325"]

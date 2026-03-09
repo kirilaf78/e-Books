@@ -17,6 +17,7 @@ const bookWithImagesDefaultChapter = books["Neurología"];
 const bookWithPdfNoChapters = books["Deutsch B1/B2 in der Pflege"];
 const bookWithEBook = books["Diagnostic Ultrasound"];
 const bookWithDocuments = books["Pflege Heute"];
+const bookWithExternalLinks = books["Macleod. Exploración clínica"];
 
 const videoPageUrl = `${process.env.EBOOKS_BASEURL}${bookWithVideoByChapters.vbid}/video/chapters?chapterPii=${bookWithVideoByChapters.getChapterPii()}&id=${process.env.VIDEO_ID}`;
 const ancillarySourceUrlCW = `https://coursewareobjects.elsevier.com/**`;
@@ -621,6 +622,52 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       ]);
       expect(download).toBeTruthy();
       await download.cancel();
+    });
+  });
+
+  test("External links page @externallinkspage", async ({
+    eBooksSignInPage,
+    libraryPage,
+    page,
+    context
+  }) => {
+    await test.step("Sign in", async () => {
+      await page.goto(process.env.EBOOKS_BASEURL);
+      await eBooksSignInPage.acceptCookiesAndSignIn(
+        users.standard.username,
+        users.standard.password
+      );
+      await expect(libraryPage.entitlementlist).toBeVisible();
+    });
+
+    await test.step("Open External links page", async () => {
+      await libraryPage.entitlementItem.filter({ hasText: bookWithExternalLinks.title }).click();
+      await libraryPage.modal.entitlementExternalLinksLink.click();
+    });
+
+    await test.step("Check the intermediate page title", async () => {
+      await expect(
+        page.getByRole("heading", {
+          name: new RegExp(`(External links|${bookWithExternalLinks.title} - External links)`)
+        })
+      ).toBeVisible();
+    });
+
+    await test.step("Check that the external links list is displayed", async () => {
+      await expect(page.locator(".content-menu")).toBeVisible();
+    });
+
+    await test.step("Open external link in a new tab", async () => {
+      const [newPage] = await Promise.all([
+        context.waitForEvent("page"),
+        page.getByRole("link", { name: "Videos" }).first().click()
+      ]);
+
+      await test.step("Verify the new tab URL", async () => {
+        await expect(newPage).toHaveURL(/coursewareobjects\.elsevier\.com/);
+      });
+
+      await newPage.close();
     });
   });
 });
