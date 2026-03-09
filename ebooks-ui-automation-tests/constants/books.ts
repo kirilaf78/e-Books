@@ -74,6 +74,10 @@ export const books = {
     title: "Deutsch B1/B2 in der Pflege",
     isbns: ["9783437250033"]
   },
+  "Pflege Heute": {
+    title: "Pflege Heute",
+    isbns: ["9783437267246"]
+  },
   "Actividad física aplicada a la osteoporosis": {
     title: "Actividad física aplicada a la osteoporosis",
     isbns: ["9788490225325"]

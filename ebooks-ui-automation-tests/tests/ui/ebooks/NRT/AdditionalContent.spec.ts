@@ -16,6 +16,7 @@ const bookWithAudioNoChapters = books["Deutsch B1/B2 in der Pflege"];
 const bookWithImagesDefaultChapter = books["Neurología"];
 const bookWithPdfNoChapters = books["Deutsch B1/B2 in der Pflege"];
 const bookWithEBook = books["Diagnostic Ultrasound"];
+const bookWithDocuments = books["Pflege Heute"];
 
 const videoPageUrl = `${process.env.EBOOKS_BASEURL}${bookWithVideoByChapters.vbid}/video/chapters?chapterPii=${bookWithVideoByChapters.getChapterPii()}&id=${process.env.VIDEO_ID}`;
 const ancillarySourceUrlCW = `https://coursewareobjects.elsevier.com/**`;
@@ -587,6 +588,39 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
     await test.step("Close Bookshelf tab", async () => {
       await newPage.close();
+    });
+  });
+
+  test("Documents page @documentspage", async ({ eBooksSignInPage, libraryPage, page }) => {
+    await test.step("Sign in", async () => {
+      await page.goto(process.env.EBOOKS_BASEURL);
+      await eBooksSignInPage.acceptCookiesAndSignIn(
+        users.standard.username,
+        users.standard.password
+      );
+      await expect(libraryPage.entitlementlist).toBeVisible();
+    });
+
+    await test.step("Open Documents page", async () => {
+      await libraryPage.entitlementItem.filter({ hasText: bookWithDocuments.title }).click();
+      await libraryPage.modal.entitlementDocumentsLink.click();
+    });
+
+    await test.step("Check the page title/breadcrumb", async () => {
+      await expect(page.getByText(`${bookWithDocuments.title}: Documents`)).toBeVisible();
+    });
+
+    await test.step("Check that documents list is displayed", async () => {
+      await expect(page.locator(".content-menu")).toBeVisible();
+    });
+
+    await test.step("Verify document download", async () => {
+      const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        page.getByText("Ausgewählte Abbildungen Kap. 1").first().click()
+      ]);
+      expect(download).toBeTruthy();
+      await download.cancel();
     });
   });
 });
