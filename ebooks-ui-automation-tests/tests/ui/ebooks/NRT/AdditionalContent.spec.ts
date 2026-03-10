@@ -623,6 +623,35 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       expect(download).toBeTruthy();
       await download.cancel();
     });
+
+    //Simulate media list request failure
+    await page.route(mediaListUrl, async (route) => {
+      await route.fulfill({
+        status: 500
+      });
+    });
+    await test.step("Reload the page", async () => {
+      await page.reload();
+    });
+
+    await test.step("Check that media list error frame is shown", async () => {
+      await expect(
+        page
+          .getByTestId("media-list-error")
+          .getByRole("heading", { name: "There was a problem loading" })
+      ).toBeVisible();
+    });
+
+    //  Return normal network operation 
+    await page.unroute(mediaListUrl);
+
+    await test.step("Click on Retry button", async () => {
+      await page.getByTestId("retry-btn").click();
+    });
+
+    await test.step("Check that documents list is displayed again", async () => {
+      await expect(page.locator(".content-menu")).toBeVisible();
+    });
   });
 
   test("External links page @externallinkspage", async ({
@@ -668,6 +697,30 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       });
 
       await newPage.close();
+    // Simulate media list request failure
+    await page.route(mediaListUrl, async (route) => {
+      await route.fulfill({
+        status: 500
+      });
+    });
+
+    await test.step("Reload the page", async () => {
+      await page.reload();
+    });
+
+    await test.step("Check that media list error frame is shown", async () => {
+      await expect(page.getByTestId('media-list-error').getByRole('heading', { name: 'There was a problem loading' })).toBeVisible();
+    });
+
+    await page.unroute(mediaListUrl);
+
+    await test.step("Click on Retry button", async () => {
+      await page.getByTestId('retry-btn').click();
+    });
+
+    await test.step("Check that external links list is displayed again", async () => {
+      await expect(page.locator(".content-menu")).toBeVisible();
+    });
     });
   });
 });
