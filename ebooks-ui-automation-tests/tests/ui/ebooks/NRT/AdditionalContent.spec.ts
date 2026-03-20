@@ -5,6 +5,7 @@ import { wording } from "@constants/wording";
 import { expect, test } from "@fixtures/pagesFixture";
 import AutoUserOperations from "@helpers/AutoUserOperations";
 import { isMobileSafari } from "@helpers/testConditions";
+import BookshelfPage from "@pages/common/BookshelfPage";
 import { Page } from "@playwright/test";
 
 test.use({
@@ -492,6 +493,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     isMobile
   }) => {
     let newPage: Page;
+    let bookshelfPage: BookshelfPage;
 
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
@@ -516,15 +518,14 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await libraryPage.modal.entitlementEbookLink.click();
 
       newPage = await pagePromise;
+      bookshelfPage = new BookshelfPage(newPage);
       await expect
         .soft(newPage)
         .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`));
 
       // on mobile the book title is hidden in the menu, so we only check it on desktop
       if (!isMobile) {
-        await expect(
-          newPage.getByRole("heading", { name: bookWithEBook.title }).first()
-        ).toBeVisible();
+        await expect(bookshelfPage.bookTitleHeading(bookWithEBook.title)).toBeVisible();
       }
     });
 
@@ -532,31 +533,24 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Verify that the eBook content is loaded (Mobile only)", async (step) => {
       step.skip(!isMobile, "Skip on desktop, full navigation is checked in subsequent steps");
 
-      const readerFrame = newPage
-        .frameLocator('iframe[title="Document reading pane"]')
-        .frameLocator("iframe");
-
       await expect(
-        readerFrame.getByRole("heading", { name: "Physics of Ultrasound" })
+        bookshelfPage.readerFrameHeading("Physics of Ultrasound")
       ).toBeVisible();
     });
 
     await test.step("Verify Expand all and Collapse all features in Bookshelf", async (step) => {
       step.skip(isMobile, "Skip on mobile, as the Table of Contents sidebar is hidden by default");
 
-      const tocPanel = newPage.locator("nav[aria-label='Table of Contents']");
-      await expect(tocPanel).toBeVisible();
+      await expect(bookshelfPage.tocPanel).toBeVisible();
 
-      const expandAllButton = newPage.getByRole("button", { name: /expand all/i });
-      await expandAllButton.click();
-      await expect(tocPanel.locator("[aria-expanded='true']").first()).toBeVisible();
+      await bookshelfPage.expandAllButton.click();
+      await expect(bookshelfPage.expandedTocItems.first()).toBeVisible();
 
-      const collapseAllButton = newPage.getByRole("button", { name: /collapse all/i });
-      await collapseAllButton.click();
+      await bookshelfPage.collapseAllButton.click();
 
       // wait for the number of expanded elements to become 0 (clean launch) or 1 (saved progress)
       await expect(async () => {
-        const count = await tocPanel.locator("[aria-expanded='true']").count();
+        const count = await bookshelfPage.expandedTocItems.count();
         expect(count).toBeLessThanOrEqual(1);
       }).toPass({ timeout: 10000 });
     });
@@ -564,28 +558,18 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Verify chapter title synchronization and sub-chapter navigation", async (step) => {
       step.skip(isMobile, "Skip on mobile, as the Table of Contents sidebar is hidden by default");
 
-      const tocPanel = newPage.locator("nav[aria-label='Table of Contents']");
-      const readerFrame = newPage
-        .frameLocator('iframe[title="Document reading pane"]')
-        .frameLocator("iframe");
+      await bookshelfPage.expandAllButton.click();
 
-      const expandAllButton = tocPanel.getByRole("button", { name: /expand all/i });
-      await expandAllButton.click();
-
-      const chapter1Link = tocPanel.getByRole("button", {
-        name: /Go to Chapter 1 Physics of/i
-      });
-      await chapter1Link.click();
+      await bookshelfPage.tocChapterLink(/Go to Chapter 1 Physics of/i).click();
 
       await expect(
-        readerFrame.getByRole("heading", { name: "Physics of Ultrasound" })
+        bookshelfPage.readerFrameHeading("Physics of Ultrasound")
       ).toBeVisible();
 
-      const instrumentation = tocPanel.getByText("Instrumentation", { exact: true });
-      await instrumentation.click();
+      await bookshelfPage.tocSubChapterLink("Instrumentation").click();
 
       await expect(
-        readerFrame.getByRole("heading", { name: "Instrumentation", exact: true })
+        bookshelfPage.readerFrameHeading("Instrumentation", true)
       ).toBeVisible();
     });
 
