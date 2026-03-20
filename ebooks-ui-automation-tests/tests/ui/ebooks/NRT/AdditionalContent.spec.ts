@@ -660,7 +660,8 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     eBooksSignInPage,
     libraryPage,
     page,
-    context
+    context,
+    externalLinksContentPage
   }) => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
@@ -677,15 +678,11 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
 
     await test.step("Check the intermediate page title", async () => {
-      await expect(
-        page.getByRole("heading", {
-          name: new RegExp(`(External links|${bookWithExternalLinks.title} - External links)`)
-        })
-      ).toBeVisible();
+      await expect(externalLinksContentPage.pageTitle(bookWithExternalLinks.title)).toBeVisible();
     });
 
     await test.step("Check that the external links list is displayed", async () => {
-      await expect(page.locator(".content-menu")).toBeVisible();
+      await expect(externalLinksContentPage.contentMenu.body).toBeVisible();
     });
 
     await test.step("Open external link in a new tab", async () => {
@@ -699,6 +696,8 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       });
 
       await newPage.close();
+    });
+
     // Simulate media list request failure
     await page.route(mediaListUrl, async (route) => {
       await route.fulfill({
@@ -711,18 +710,20 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
 
     await test.step("Check that media list error frame is shown", async () => {
-      await expect(page.getByTestId('media-list-error').getByRole('heading', { name: 'There was a problem loading' })).toBeVisible();
+      await expect(
+        externalLinksContentPage.mediaListErrorFrame
+          .getByRole("heading", { name: "There was a problem loading" })
+      ).toBeVisible();
     });
 
     await page.unroute(mediaListUrl);
 
     await test.step("Click on Retry button", async () => {
-      await page.getByTestId('retry-btn').click();
+      await externalLinksContentPage.mediaListRetryButton.click();
     });
 
     await test.step("Check that external links list is displayed again", async () => {
-      await expect(page.locator(".content-menu")).toBeVisible();
-    });
+      await expect(externalLinksContentPage.contentMenu.body).toBeVisible();
     });
   });
 });

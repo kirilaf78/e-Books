@@ -103,3 +103,16 @@ export class DocumentsContentPage extends ContentPage {
     return this.page.getByText(name).first();
   }
 }
+
+export class ExternalLinksContentPage extends ContentPage {
+  constructor(page: Page) {
+    super(page);
+  }
+
+  /** Returns a locator for the intermediate page title / heading */
+  pageTitle(bookTitle: string): Locator {
+    return this.page.getByRole("heading", {
+      name: new RegExp(`(External links|${bookTitle} - External links)`)
+    });
+  }
+}
