@@ -15,7 +15,7 @@ export default class ContentMenu {
 
   constructor(page: Page) {
     this.page = page;
-    this.body = page.locator("#content-menu");
+    this.body = page.locator("div#content-menu");
     this.heading = this.body.locator("h2");
     this.panel = this.body.getByTestId("toggle-panel");
     this.panelTitle = this.panel.getByRole("button");

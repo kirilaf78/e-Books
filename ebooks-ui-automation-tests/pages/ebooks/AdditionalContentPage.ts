@@ -87,3 +87,19 @@ export class PdfContentPage extends ContentPage {
     this.pdfMobileViewTitle = page.getByTestId("mobile-header");
   }
 }
+
+export class DocumentsContentPage extends ContentPage {
+  constructor(page: Page) {
+    super(page);
+  }
+
+  /** Returns a locator for the page title/breadcrumb containing the given book title */
+  pageTitle(bookTitle: string): Locator {
+    return this.page.getByText(`${bookTitle}: Documents`);
+  }
+
+  /** Returns a locator for a document download link by its visible name */
+  documentLink(name: string): Locator {
+    return this.page.getByText(name).first();
+  }
+}

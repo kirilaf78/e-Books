@@ -107,7 +107,9 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await videoContentPage.contentMenu.panelTitle.nth(3).click();
     });
 
-    const videoTitle = await videoContentPage.contentMenu.panelItemLink.first().textContent();
+    // Filter links to get only the one that is actually visible on the screen (in the expanded panel)
+    const firstVisibleLink = videoContentPage.contentMenu.panelItemLink.filter({ visible: true }).first();
+    const videoTitle = await firstVisibleLink.textContent();
 
     await test.step("Open a video from expanded panel", async () => {
       await videoContentPage.contentMenu.panelItemLink.filter({ hasText: videoTitle }).click();
@@ -592,7 +594,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("Documents page @documentspage", async ({ eBooksSignInPage, libraryPage, page }) => {
+  test("Documents page @documentspage", async ({ eBooksSignInPage, libraryPage, page, documentsContentPage }) => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
@@ -608,49 +610,49 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
 
     await test.step("Check the page title/breadcrumb", async () => {
-      await expect(page.getByText(`${bookWithDocuments.title}: Documents`)).toBeVisible();
+      await expect(documentsContentPage.pageTitle(bookWithDocuments.title)).toBeVisible();
     });
 
     await test.step("Check that documents list is displayed", async () => {
-      await expect(page.locator(".content-menu")).toBeVisible();
+      await expect(documentsContentPage.contentMenu.body).toBeVisible();
     });
 
     await test.step("Verify document download", async () => {
       const [download] = await Promise.all([
         page.waitForEvent("download"),
-        page.getByText("Ausgewählte Abbildungen Kap. 1").first().click()
+        documentsContentPage.documentLink("Ausgewählte Abbildungen Kap. 1").click()
       ]);
       expect(download).toBeTruthy();
       await download.cancel();
     });
 
-    //Simulate media list request failure
+    // Simulate media list request failure
     await page.route(mediaListUrl, async (route) => {
       await route.fulfill({
         status: 500
       });
     });
+
     await test.step("Reload the page", async () => {
       await page.reload();
     });
 
     await test.step("Check that media list error frame is shown", async () => {
       await expect(
-        page
-          .getByTestId("media-list-error")
+        documentsContentPage.mediaListErrorFrame
           .getByRole("heading", { name: "There was a problem loading" })
       ).toBeVisible();
     });
 
-    //  Return normal network operation 
+    // Return normal network operation
     await page.unroute(mediaListUrl);
 
     await test.step("Click on Retry button", async () => {
-      await page.getByTestId("retry-btn").click();
+      await documentsContentPage.mediaListRetryButton.click();
     });
 
     await test.step("Check that documents list is displayed again", async () => {
-      await expect(page.locator(".content-menu")).toBeVisible();
+      await expect(documentsContentPage.contentMenu.body).toBeVisible();
     });
   });
 
