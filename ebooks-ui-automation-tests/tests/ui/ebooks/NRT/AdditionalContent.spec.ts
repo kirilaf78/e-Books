@@ -542,6 +542,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       step.skip(isMobile, "Skip on mobile, as the Table of Contents sidebar is hidden by default");
 
       await expect(bookshelfPage.tocPanel).toBeVisible();
+      await expect(bookshelfPage.tocPanel.getByRole("button").first()).toBeVisible();
 
       await bookshelfPage.expandAllButton.click();
       await expect(bookshelfPage.expandedTocItems.first()).toBeVisible();
@@ -599,6 +600,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
     await test.step("Check that documents list is displayed", async () => {
       await expect(documentsContentPage.contentMenu.body).toBeVisible();
+      await expect(documentsContentPage.contentMenu.body.getByRole("button").first()).toBeVisible();
     });
 
     await test.step("Verify document download", async () => {
@@ -667,6 +669,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
     await test.step("Check that the external links list is displayed", async () => {
       await expect(externalLinksContentPage.contentMenu.body).toBeVisible();
+      await expect(externalLinksContentPage.contentMenu.body.getByRole("button").first()).toBeVisible();
     });
 
     await test.step("Open external link in a new tab", async () => {
