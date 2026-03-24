@@ -606,7 +606,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Verify document download", async () => {
       const [download] = await Promise.all([
         page.waitForEvent("download"),
-        documentsContentPage.documentLink("Ausgewählte Abbildungen Kap. 1").click()
+        documentsContentPage.contentMenu.body.getByRole("button").first().click()
       ]);
       expect(download).toBeTruthy();
       await download.cancel();
@@ -675,7 +675,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Open external link in a new tab", async () => {
       const [newPage] = await Promise.all([
         context.waitForEvent("page"),
-        page.getByRole("link", { name: "Videos" }).first().click()
+        externalLinksContentPage.contentMenu.body.getByRole("link").first().click()
       ]);
 
       await test.step("Verify the new tab URL", async () => {

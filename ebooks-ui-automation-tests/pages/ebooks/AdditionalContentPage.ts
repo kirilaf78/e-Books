@@ -97,11 +97,6 @@ export class DocumentsContentPage extends ContentPage {
   pageTitle(bookTitle: string): Locator {
     return this.page.getByText(`${bookTitle}: Documents`);
   }
-
-  /** Returns a locator for a document download link by its visible name */
-  documentLink(name: string): Locator {
-    return this.page.getByText(name).first();
-  }
 }
 
 export class ExternalLinksContentPage extends ContentPage {
