@@ -589,9 +589,21 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
 
+    let expectedDocumentId: string;
+
     await test.step("Open Documents page", async () => {
+      const mediaListResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/V2/ancillary-contents-metadata?offset") &&
+          response.request().method() === "GET"
+      );
+      
       await libraryPage.entitlementItem.filter({ hasText: bookWithDocuments.title }).click();
       await libraryPage.modal.entitlementDocumentsLink.click();
+      
+      const response = await mediaListResponsePromise;
+      const mediaListData = await response.json();
+      expectedDocumentId = mediaListData.metadata[0].id;
     });
 
     await test.step("Check the page title/breadcrumb", async () => {
@@ -603,12 +615,16 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await expect(documentsContentPage.contentMenu.body.getByRole("button").first()).toBeVisible();
     });
 
-    await test.step("Verify document download", async () => {
+await test.step("Verify document download", async () => {
       const [download] = await Promise.all([
         page.waitForEvent("download"),
         documentsContentPage.contentMenu.body.getByRole("button").first().click()
       ]);
       expect(download).toBeTruthy();
+      
+      const downloadedFilename = download.suggestedFilename();
+      expect(downloadedFilename).toContain(expectedDocumentId);
+      
       await download.cancel();
     });
 
