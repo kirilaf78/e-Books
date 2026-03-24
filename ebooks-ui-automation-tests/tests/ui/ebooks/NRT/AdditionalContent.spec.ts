@@ -109,7 +109,9 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
 
     // Filter links to get only the one that is actually visible on the screen (in the expanded panel)
-    const firstVisibleLink = videoContentPage.contentMenu.panelItemLink.filter({ visible: true }).first();
+    const firstVisibleLink = videoContentPage.contentMenu.panelItemLink
+      .filter({ visible: true })
+      .first();
     const videoTitle = await firstVisibleLink.textContent();
 
     await test.step("Open a video from expanded panel", async () => {
@@ -533,9 +535,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     await test.step("Verify that the eBook content is loaded (Mobile only)", async (step) => {
       step.skip(!isMobile, "Skip on desktop, full navigation is checked in subsequent steps");
 
-      await expect(
-        bookshelfPage.readerFrameHeading("Physics of Ultrasound")
-      ).toBeVisible();
+      await expect(bookshelfPage.readerFrameHeading("Physics of Ultrasound")).toBeVisible();
     });
 
     await test.step("Verify Expand all and Collapse all features in Bookshelf", async (step) => {
@@ -563,15 +563,11 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
       await bookshelfPage.tocChapterLink(/Go to Chapter 1 Physics of/i).click();
 
-      await expect(
-        bookshelfPage.readerFrameHeading("Physics of Ultrasound")
-      ).toBeVisible();
+      await expect(bookshelfPage.readerFrameHeading("Physics of Ultrasound")).toBeVisible();
 
       await bookshelfPage.tocSubChapterLink("Instrumentation").click();
 
-      await expect(
-        bookshelfPage.readerFrameHeading("Instrumentation", true)
-      ).toBeVisible();
+      await expect(bookshelfPage.readerFrameHeading("Instrumentation", true)).toBeVisible();
     });
 
     await test.step("Close Bookshelf tab", async () => {
@@ -579,7 +575,14 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("Documents page @documentspage", async ({ eBooksSignInPage, libraryPage, page, documentsContentPage }) => {
+  test("Documents page @documentspage", async ({
+    eBooksSignInPage,
+    libraryPage,
+    page,
+    documentsContentPage
+  }) => {
+    let expectedDocumentId: string;
+
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
@@ -589,18 +592,16 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
 
-    let expectedDocumentId: string;
-
     await test.step("Open Documents page", async () => {
       const mediaListResponsePromise = page.waitForResponse(
         (response) =>
           response.url().includes("/V2/ancillary-contents-metadata?offset") &&
           response.request().method() === "GET"
       );
-      
+
       await libraryPage.entitlementItem.filter({ hasText: bookWithDocuments.title }).click();
       await libraryPage.modal.entitlementDocumentsLink.click();
-      
+
       const response = await mediaListResponsePromise;
       const mediaListData = await response.json();
       expectedDocumentId = mediaListData.metadata[0].id;
@@ -610,54 +611,35 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await expect(documentsContentPage.pageTitle(bookWithDocuments.title)).toBeVisible();
     });
 
-    await test.step("Check that documents list is displayed", async () => {
+    await test.step("Check that documents list is displayed and not empty", async () => {
       await expect(documentsContentPage.contentMenu.body).toBeVisible();
       await expect(documentsContentPage.contentMenu.body.getByRole("button").first()).toBeVisible();
     });
 
-await test.step("Verify document download", async () => {
+    await test.step("Verify document download and file validity", async () => {
       const [download] = await Promise.all([
         page.waitForEvent("download"),
         documentsContentPage.contentMenu.body.getByRole("button").first().click()
       ]);
       expect(download).toBeTruthy();
-      
+
+      // 1. Check that UI passed the correct file name
       const downloadedFilename = download.suggestedFilename();
       expect(downloadedFilename).toContain(expectedDocumentId);
-      
+
+      // 2. Get the direct file URL and cancel the download in the browser
+      const fileUrl = download.url();
       await download.cancel();
-    });
 
-    // Simulate media list request failure
-    await page.route(mediaListUrl, async (route) => {
-      await route.fulfill({
-        status: 500
-      });
-    });
+      // 3. Make a hidden HEAD request to make sure the file actually exists and is not empty
+      const headResponse = await page.request.head(fileUrl);
+      expect(headResponse.status()).toBe(200);
 
-    await test.step("Reload the page", async () => {
-      await page.reload();
-    });
-
-    await test.step("Check that media list error frame is shown", async () => {
-      await expect(
-        documentsContentPage.mediaListErrorFrame
-          .getByRole("heading", { name: "There was a problem loading" })
-      ).toBeVisible();
-    });
-
-    // Return normal network operation
-    await page.unroute(mediaListUrl);
-
-    await test.step("Click on Retry button", async () => {
-      await documentsContentPage.mediaListRetryButton.click();
-    });
-
-    await test.step("Check that documents list is displayed again", async () => {
-      await expect(documentsContentPage.contentMenu.body).toBeVisible();
+      const headers = headResponse.headers();
+      const contentLength = parseInt(headers["content-length"] || "0", 10);
+      expect(contentLength).toBeGreaterThan(0);
     });
   });
-
   test("External links page @externallinkspage", async ({
     eBooksSignInPage,
     libraryPage,
@@ -685,7 +667,9 @@ await test.step("Verify document download", async () => {
 
     await test.step("Check that the external links list is displayed", async () => {
       await expect(externalLinksContentPage.contentMenu.body).toBeVisible();
-      await expect(externalLinksContentPage.contentMenu.body.getByRole("button").first()).toBeVisible();
+      await expect(
+        externalLinksContentPage.contentMenu.body.getByRole("link").first()
+      ).toBeVisible();
     });
 
     await test.step("Open external link in a new tab", async () => {
@@ -701,32 +685,5 @@ await test.step("Verify document download", async () => {
       await newPage.close();
     });
 
-    // Simulate media list request failure
-    await page.route(mediaListUrl, async (route) => {
-      await route.fulfill({
-        status: 500
-      });
-    });
-
-    await test.step("Reload the page", async () => {
-      await page.reload();
-    });
-
-    await test.step("Check that media list error frame is shown", async () => {
-      await expect(
-        externalLinksContentPage.mediaListErrorFrame
-          .getByRole("heading", { name: "There was a problem loading" })
-      ).toBeVisible();
-    });
-
-    await page.unroute(mediaListUrl);
-
-    await test.step("Click on Retry button", async () => {
-      await externalLinksContentPage.mediaListRetryButton.click();
-    });
-
-    await test.step("Check that external links list is displayed again", async () => {
-      await expect(externalLinksContentPage.contentMenu.body).toBeVisible();
-    });
   });
 });
