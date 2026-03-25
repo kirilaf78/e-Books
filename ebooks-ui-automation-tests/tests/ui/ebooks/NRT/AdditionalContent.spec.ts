@@ -45,7 +45,13 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
   });
-  test("Video page @videopage", async ({ libraryPage, videoContentPage, page, browserName, isMobile }) => {
+  test("Video page @videopage", async ({
+    libraryPage,
+    videoContentPage,
+    page,
+    browserName,
+    isMobile
+  }) => {
     await test.step("Open video page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithVideoByChapters.title }).click();
       await libraryPage.modal.entitlementVideosLink.click();
@@ -227,12 +233,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("Image page @imagepage", async ({
-    libraryPage,
-    imageContentPage,
-    isMobile,
-    page
-  }) => {
+  test("Image page @imagepage", async ({ libraryPage, imageContentPage, isMobile, page }) => {
     const responseFromImageSource = page.waitForResponse(imageSource(ancillarySourceUrlCW));
 
     await test.step("Open image page", async () => {
@@ -373,13 +374,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("PDF page @pdfpage", async ({
-    libraryPage,
-    pdfContentPage,
-    isMobile,
-    page,
-    request
-  }) => {
+  test("PDF page @pdfpage", async ({ libraryPage, pdfContentPage, isMobile, page, request }) => {
     const pdfListResponse = await test.step("Open PDF page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithPdfNoChapters.title }).click();
       const mediaListResponse = page.waitForResponse(
@@ -444,12 +439,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("eBook page @ebookpage", async ({
-    libraryPage,
-    page,
-    context,
-    isMobile
-  }) => {
+  test("eBook page @ebookpage", async ({ libraryPage, page, context, isMobile }) => {
     let newPage: Page;
     let bookshelfPage: BookshelfPage;
 
@@ -511,11 +501,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("Documents page @documentspage", async ({
-    libraryPage,
-    page,
-    documentsContentPage
-  }) => {
+  test("Documents page @documentspage", async ({ libraryPage, page, documentsContentPage }) => {
     let expectedDocumentId: string;
 
     await test.step("Open Documents page", async () => {
