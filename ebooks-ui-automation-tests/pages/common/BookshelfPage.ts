@@ -3,8 +3,6 @@ import { FrameLocator, Locator, Page } from "@playwright/test";
 export default class BookshelfPage {
   readonly page: Page;
   readonly tocPanel: Locator;
-  readonly tocPanelDesktop: Locator;
-  readonly tocPanelMobile: Locator;
   readonly tocButton: Locator;
   readonly bookNavigation: Locator;
   readonly readerFrame: FrameLocator;
@@ -14,9 +12,7 @@ export default class BookshelfPage {
 
   constructor(page: Page) {
     this.page = page;
-    this.tocPanel = page.locator("nav[aria-label='Table of Contents']");
-    this.tocPanelDesktop = this.tocPanel;
-    this.tocPanelMobile = page.locator("div[aria-label='Table of Contents']");
+    this.tocPanel = page.locator("nav[aria-label='Table of Contents'], div[aria-label='Table of Contents']");
     this.tocButton = page.locator("button[aria-label='Table of Contents']");
     this.bookNavigation = page.getByLabel("Book navigation");
     this.readerFrame = page

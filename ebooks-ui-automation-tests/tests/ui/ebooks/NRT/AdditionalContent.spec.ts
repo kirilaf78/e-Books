@@ -538,8 +538,11 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await expect(bookshelfPage.readerFrameHeading("Physics of Ultrasound")).toBeVisible();
     });
 
-    await test.step("Verify Expand all and Collapse all features in Bookshelf", async (step) => {
-      step.skip(isMobile, "Skip on mobile, as the Table of Contents sidebar is hidden by default");
+    await test.step("Verify Expand all and Collapse all features in Bookshelf", async () => {
+      // Открываем оглавление на мобильных устройствах
+      if (isMobile) {
+        await bookshelfPage.tocButton.click();
+      }
 
       await expect(bookshelfPage.tocPanel).toBeVisible();
       await expect(bookshelfPage.tocPanel.getByRole("button").first()).toBeVisible();
@@ -556,9 +559,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       }).toPass({ timeout: 10000 });
     });
 
-    await test.step("Verify chapter title synchronization and sub-chapter navigation", async (step) => {
-      step.skip(isMobile, "Skip on mobile, as the Table of Contents sidebar is hidden by default");
-
+await test.step("Verify chapter title synchronization and sub-chapter navigation", async () => {
       await bookshelfPage.expandAllButton.click();
 
       await bookshelfPage.tocChapterLink(/Go to Chapter 1 Physics of/i).click();
@@ -568,12 +569,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await bookshelfPage.tocSubChapterLink("Instrumentation").click();
 
       await expect(bookshelfPage.readerFrameHeading("Instrumentation", true)).toBeVisible();
-    });
-
-    await test.step("Close Bookshelf tab", async () => {
-      await newPage.close();
-    });
-  });
+    });  });
 
   test("Documents page @documentspage", async ({
     eBooksSignInPage,
@@ -684,6 +680,5 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
       await newPage.close();
     });
-
   });
 });
