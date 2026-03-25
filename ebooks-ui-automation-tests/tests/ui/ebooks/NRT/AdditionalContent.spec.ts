@@ -45,14 +45,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
   });
-  test("Video page @videopage", async ({
-    eBooksSignInPage,
-    libraryPage,
-    videoContentPage,
-    page,
-    browserName,
-    isMobile
-  }) => {
+  test("Video page @videopage", async ({ libraryPage, videoContentPage, page, browserName, isMobile }) => {
     await test.step("Open video page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithVideoByChapters.title }).click();
       await libraryPage.modal.entitlementVideosLink.click();
@@ -170,13 +163,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("Audio page @audiopage", async ({
-    eBooksSignInPage,
-    libraryPage,
-    audioContentPage,
-    page,
-    isMobile
-  }) => {
+  test("Audio page @audiopage", async ({ libraryPage, audioContentPage, page, isMobile }) => {
     await test.step("Open audio page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithAudioNoChapters.title }).click();
       await libraryPage.modal.entitlementAudiosLink.click();
@@ -241,7 +228,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
   });
 
   test("Image page @imagepage", async ({
-    eBooksSignInPage,
     libraryPage,
     imageContentPage,
     isMobile,
@@ -388,7 +374,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
   });
 
   test("PDF page @pdfpage", async ({
-    eBooksSignInPage,
     libraryPage,
     pdfContentPage,
     isMobile,
@@ -460,7 +445,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
   });
 
   test("eBook page @ebookpage", async ({
-    eBooksSignInPage,
     libraryPage,
     page,
     context,
@@ -528,7 +512,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
   });
 
   test("Documents page @documentspage", async ({
-    eBooksSignInPage,
     libraryPage,
     page,
     documentsContentPage
@@ -583,7 +566,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
   test("External links page @externallinkspage", async ({
-    eBooksSignInPage,
     libraryPage,
     page,
     context,
