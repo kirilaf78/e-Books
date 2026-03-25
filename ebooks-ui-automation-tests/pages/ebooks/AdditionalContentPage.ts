@@ -93,9 +93,9 @@ export class DocumentsContentPage extends ContentPage {
     super(page);
   }
 
-  /** Returns a locator for the page title/breadcrumb containing the given book title */
-  pageTitle(bookTitle: string): Locator {
-    return this.page.getByText(`${bookTitle}: Documents`);
+  /** Returns a locator for the main central heading with format "BookTitle - Documents" */
+  mainHeading(bookTitle: string): Locator {
+    return this.page.getByRole("heading", { name: `${bookTitle} - Documents` });
   }
 }
 

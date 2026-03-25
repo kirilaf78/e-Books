@@ -533,8 +533,8 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       expectedDocumentId = mediaListData.metadata[0].id;
     });
 
-    await test.step("Check the page title/breadcrumb", async () => {
-      await expect(documentsContentPage.pageTitle(bookWithDocuments.title)).toBeVisible();
+    await test.step("Check the main content heading", async () => {
+      await expect(documentsContentPage.mainHeading(bookWithDocuments.title)).toBeVisible();
     });
 
     await test.step("Check that documents list is displayed and not empty", async () => {
