@@ -30,21 +30,12 @@ const imageSource = (domain: string) => {
 const mediaListUrl = `${process.env.APIS_BASEURL}content/V2/ancillary-contents-metadata?**`;
 
 test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
-  test.beforeEach(async ({ context }) => {
+  test.beforeEach(async ({ context, page, eBooksSignInPage, libraryPage }) => {
     await test.step("Set auto user cookie", async () => {
       // To prevent Pendo banners display https://elsevier.atlassian.net/browse/ESPMPS-2759
       await AutoUserOperations.setCookies(context);
     });
-  });
 
-  test("Video page @videopage", async ({
-    eBooksSignInPage,
-    libraryPage,
-    videoContentPage,
-    page,
-    browserName,
-    isMobile
-  }) => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
@@ -53,7 +44,15 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
-
+  });
+  test("Video page @videopage", async ({
+    eBooksSignInPage,
+    libraryPage,
+    videoContentPage,
+    page,
+    browserName,
+    isMobile
+  }) => {
     await test.step("Open video page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithVideoByChapters.title }).click();
       await libraryPage.modal.entitlementVideosLink.click();
@@ -178,15 +177,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     page,
     isMobile
   }) => {
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
     await test.step("Open audio page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithAudioNoChapters.title }).click();
       await libraryPage.modal.entitlementAudiosLink.click();
@@ -257,15 +247,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     isMobile,
     page
   }) => {
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
     const responseFromImageSource = page.waitForResponse(imageSource(ancillarySourceUrlCW));
 
     await test.step("Open image page", async () => {
@@ -414,15 +395,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     page,
     request
   }) => {
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
     const pdfListResponse = await test.step("Open PDF page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithPdfNoChapters.title }).click();
       const mediaListResponse = page.waitForResponse(
@@ -497,15 +469,6 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     let newPage: Page;
     let bookshelfPage: BookshelfPage;
 
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
     const bookISBN = await test.step("Open eBook", async () => {
       const entitlement = libraryPage.entitlementItem.filter({
         hasText: bookWithEBook.title
@@ -531,15 +494,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       }
     });
 
-    // quick content check only for mobile devices
-    await test.step("Verify that the eBook content is loaded (Mobile only)", async (step) => {
-      step.skip(!isMobile, "Skip on desktop, full navigation is checked in subsequent steps");
-
-      await expect(bookshelfPage.readerFrameHeading("Physics of Ultrasound")).toBeVisible();
-    });
-
     await test.step("Verify Expand all and Collapse all features in Bookshelf", async () => {
-      // Открываем оглавление на мобильных устройствах
       if (isMobile) {
         await bookshelfPage.tocButton.click();
       }
@@ -559,7 +514,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       }).toPass({ timeout: 10000 });
     });
 
-await test.step("Verify chapter title synchronization and sub-chapter navigation", async () => {
+    await test.step("Verify chapter title synchronization and sub-chapter navigation", async () => {
       await bookshelfPage.expandAllButton.click();
 
       await bookshelfPage.tocChapterLink(/Go to Chapter 1 Physics of/i).click();
@@ -569,7 +524,8 @@ await test.step("Verify chapter title synchronization and sub-chapter navigation
       await bookshelfPage.tocSubChapterLink("Instrumentation").click();
 
       await expect(bookshelfPage.readerFrameHeading("Instrumentation", true)).toBeVisible();
-    });  });
+    });
+  });
 
   test("Documents page @documentspage", async ({
     eBooksSignInPage,
@@ -578,15 +534,6 @@ await test.step("Verify chapter title synchronization and sub-chapter navigation
     documentsContentPage
   }) => {
     let expectedDocumentId: string;
-
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
 
     await test.step("Open Documents page", async () => {
       const mediaListResponsePromise = page.waitForResponse(
@@ -608,7 +555,6 @@ await test.step("Verify chapter title synchronization and sub-chapter navigation
     });
 
     await test.step("Check that documents list is displayed and not empty", async () => {
-      await expect(documentsContentPage.contentMenu.body).toBeVisible();
       await expect(documentsContentPage.contentMenu.body.getByRole("button").first()).toBeVisible();
     });
 
@@ -643,15 +589,6 @@ await test.step("Verify chapter title synchronization and sub-chapter navigation
     context,
     externalLinksContentPage
   }) => {
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
     await test.step("Open External links page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithExternalLinks.title }).click();
       await libraryPage.modal.entitlementExternalLinksLink.click();
@@ -662,7 +599,6 @@ await test.step("Verify chapter title synchronization and sub-chapter navigation
     });
 
     await test.step("Check that the external links list is displayed", async () => {
-      await expect(externalLinksContentPage.contentMenu.body).toBeVisible();
       await expect(
         externalLinksContentPage.contentMenu.body.getByRole("link").first()
       ).toBeVisible();
