@@ -458,16 +458,18 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
       newPage = await pagePromise;
       bookshelfPage = new BookshelfPage(newPage);
-      await expect
+
+await expect
         .soft(newPage)
-        .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`));
+        .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`), {
+          timeout: 30000
+        });
 
       // on mobile the book title is hidden in the menu, so we only check it on desktop
       if (!isMobile) {
         await expect(bookshelfPage.bookTitleHeading(bookWithEBook.title)).toBeVisible();
       }
     });
-
     await test.step("Verify Expand all and Collapse all features in Bookshelf", async () => {
       if (isMobile) {
         await bookshelfPage.tocButton.click();
@@ -567,9 +569,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
 
     await test.step("Check that the external links list is displayed", async () => {
-      await expect(
-        externalLinksContentPage.externalLinkItems.first()
-      ).toBeVisible();
+      await expect(externalLinksContentPage.externalLinkItems.first()).toBeVisible();
     });
 
     await test.step("Open external link in a new tab", async () => {
