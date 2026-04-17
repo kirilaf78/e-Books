@@ -568,14 +568,14 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
     await test.step("Check that the external links list is displayed", async () => {
       await expect(
-        externalLinksContentPage.contentMenu.body.getByRole("link").first()
+        externalLinksContentPage.externalLinkItems.first()
       ).toBeVisible();
     });
 
     await test.step("Open external link in a new tab", async () => {
       const [newPage] = await Promise.all([
         context.waitForEvent("page"),
-        externalLinksContentPage.contentMenu.body.getByRole("link").first().click()
+        externalLinksContentPage.externalLinkItems.first().click()
       ]);
 
       await test.step("Verify the new tab URL", async () => {

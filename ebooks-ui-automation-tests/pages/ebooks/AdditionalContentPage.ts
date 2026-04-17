@@ -106,8 +106,15 @@ export class DocumentsContentPage extends ContentPage {
 }
 
 export class ExternalLinksContentPage extends ContentPage {
+  /** Locator for each external link item in the sidebar chapter panel */
+  readonly externalLinkItems: Locator;
+
   constructor(page: Page) {
     super(page);
+    this.externalLinkItems = this.page
+      .getByRole("navigation", { name: "Chapters" })
+      .getByRole("list")
+      .getByRole("link");
   }
 
   /** Returns a locator for the intermediate page title / heading */
