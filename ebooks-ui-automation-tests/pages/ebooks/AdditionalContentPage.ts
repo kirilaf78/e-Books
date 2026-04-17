@@ -87,3 +87,40 @@ export class PdfContentPage extends ContentPage {
     this.pdfMobileViewTitle = page.getByTestId("mobile-header");
   }
 }
+
+export class DocumentsContentPage extends ContentPage {
+  /** Locator for each downloadable document button in the sidebar list */
+  readonly documentItems: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.documentItems = this.page
+      .getByRole("navigation", { name: "All Documents" })
+      .getByRole("button");
+  }
+
+  /** Returns a locator for the main central heading with format "BookTitle - Documents" */
+  mainHeading(bookTitle: string): Locator {
+    return this.page.getByRole("heading", { name: `${bookTitle} - Documents` });
+  }
+}
+
+export class ExternalLinksContentPage extends ContentPage {
+  /** Locator for each external link item in the sidebar chapter panel */
+  readonly externalLinkItems: Locator;
+
+  constructor(page: Page) {
+    super(page);
+    this.externalLinkItems = this.page
+      .getByRole("navigation", { name: "Chapters" })
+      .getByRole("list")
+      .getByRole("link");
+  }
+
+  /** Returns a locator for the intermediate page title / heading */
+  pageTitle(bookTitle: string): Locator {
+    return this.page.getByRole("heading", {
+      name: new RegExp(`(External links|${bookTitle} - External links)`)
+    });
+  }
+}

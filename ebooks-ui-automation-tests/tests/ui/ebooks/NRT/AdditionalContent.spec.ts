@@ -1,9 +1,12 @@
 import { books } from "@constants/books";
+import { externalLinks } from "@constants/externalLinks";
 import { users } from "@constants/users";
 import { wording } from "@constants/wording";
 import { expect, test } from "@fixtures/pagesFixture";
 import AutoUserOperations from "@helpers/AutoUserOperations";
 import { isMobileSafari } from "@helpers/testConditions";
+import BookshelfPage from "@pages/common/BookshelfPage";
+import { Page } from "@playwright/test";
 
 test.use({
   launchOptions: { slowMo: 500 }
@@ -13,6 +16,9 @@ const bookWithVideoByChapters = books["Diagnostic Ultrasound"];
 const bookWithAudioNoChapters = books["Deutsch B1/B2 in der Pflege"];
 const bookWithImagesDefaultChapter = books["Neurología"];
 const bookWithPdfNoChapters = books["Deutsch B1/B2 in der Pflege"];
+const bookWithEBook = books["Diagnostic Ultrasound"];
+const bookWithDocuments = books["Pflege Heute"];
+const bookWithExternalLinks = books["Macleod. Exploración clínica"];
 
 const videoPageUrl = `${process.env.EBOOKS_BASEURL}${bookWithVideoByChapters.vbid}/video/chapters?chapterPii=${bookWithVideoByChapters.getChapterPii()}&id=${process.env.VIDEO_ID}`;
 const ancillarySourceUrlCW = `https://coursewareobjects.elsevier.com/**`;
@@ -24,21 +30,12 @@ const imageSource = (domain: string) => {
 const mediaListUrl = `${process.env.APIS_BASEURL}content/V2/ancillary-contents-metadata?**`;
 
 test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
-  test.beforeEach(async ({ context }) => {
+  test.beforeEach(async ({ context, page, eBooksSignInPage, libraryPage }) => {
     await test.step("Set auto user cookie", async () => {
       // To prevent Pendo banners display https://elsevier.atlassian.net/browse/ESPMPS-2759
       await AutoUserOperations.setCookies(context);
     });
-  });
 
-  test("Video page @videopage", async ({
-    eBooksSignInPage,
-    libraryPage,
-    videoContentPage,
-    page,
-    browserName,
-    isMobile
-  }) => {
     await test.step("Sign in", async () => {
       await page.goto(process.env.EBOOKS_BASEURL);
       await eBooksSignInPage.acceptCookiesAndSignIn(
@@ -47,7 +44,14 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       );
       await expect(libraryPage.entitlementlist).toBeVisible();
     });
-
+  });
+  test("Video page @videopage", async ({
+    libraryPage,
+    videoContentPage,
+    page,
+    browserName,
+    isMobile
+  }) => {
     await test.step("Open video page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithVideoByChapters.title }).click();
       await libraryPage.modal.entitlementVideosLink.click();
@@ -102,7 +106,11 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
       await videoContentPage.contentMenu.panelTitle.nth(3).click();
     });
 
-    const videoTitle = await videoContentPage.contentMenu.panelItemLink.first().textContent();
+    // Filter links to get only the one that is actually visible on the screen (in the expanded panel)
+    const firstVisibleLink = videoContentPage.contentMenu.panelItemLink
+      .filter({ visible: true })
+      .first();
+    const videoTitle = await firstVisibleLink.textContent();
 
     await test.step("Open a video from expanded panel", async () => {
       await videoContentPage.contentMenu.panelItemLink.filter({ hasText: videoTitle }).click();
@@ -161,22 +169,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("Audio page @audiopage", async ({
-    eBooksSignInPage,
-    libraryPage,
-    audioContentPage,
-    page,
-    isMobile
-  }) => {
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
+  test("Audio page @audiopage", async ({ libraryPage, audioContentPage, page, isMobile }) => {
     await test.step("Open audio page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithAudioNoChapters.title }).click();
       await libraryPage.modal.entitlementAudiosLink.click();
@@ -240,22 +233,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("Image page @imagepage", async ({
-    eBooksSignInPage,
-    libraryPage,
-    imageContentPage,
-    isMobile,
-    page
-  }) => {
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
+  test("Image page @imagepage", async ({ libraryPage, imageContentPage, isMobile, page }) => {
     const responseFromImageSource = page.waitForResponse(imageSource(ancillarySourceUrlCW));
 
     await test.step("Open image page", async () => {
@@ -396,23 +374,7 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
   });
 
-  test("PDF page @pdfpage", async ({
-    eBooksSignInPage,
-    libraryPage,
-    pdfContentPage,
-    isMobile,
-    page,
-    request
-  }) => {
-    await test.step("Sign in", async () => {
-      await page.goto(process.env.EBOOKS_BASEURL);
-      await eBooksSignInPage.acceptCookiesAndSignIn(
-        users.standard.username,
-        users.standard.password
-      );
-      await expect(libraryPage.entitlementlist).toBeVisible();
-    });
-
+  test("PDF page @pdfpage", async ({ libraryPage, pdfContentPage, isMobile, page, request }) => {
     const pdfListResponse = await test.step("Open PDF page", async () => {
       await libraryPage.entitlementItem.filter({ hasText: bookWithPdfNoChapters.title }).click();
       const mediaListResponse = page.waitForResponse(
@@ -474,6 +436,153 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
 
     await test.step("Check that media list error frame is shown", async () => {
       await expect(pdfContentPage.mediaListErrorFrame).toBeVisible();
+    });
+  });
+
+  test("eBook page @ebookpage", async ({ libraryPage, page, context, isMobile }) => {
+    let newPage: Page;
+    let bookshelfPage: BookshelfPage;
+
+    const bookISBN = await test.step("Open eBook", async () => {
+      const entitlement = libraryPage.entitlementItem.filter({
+        hasText: bookWithEBook.title
+      });
+      const isbn = await entitlement.getAttribute("id");
+      await entitlement.click();
+      return isbn;
+    });
+
+    await test.step("Click on the eBook link and verify Bookshelf redirection", async () => {
+      const pagePromise = context.waitForEvent("page");
+      await libraryPage.modal.entitlementEbookLink.click();
+
+      newPage = await pagePromise;
+      bookshelfPage = new BookshelfPage(newPage);
+
+await expect
+        .soft(newPage)
+        .toHaveURL(new RegExp(`${externalLinks.bookshelf}/reader/books/${bookISBN}`), {
+          timeout: 30000
+        });
+
+      // on mobile the book title is hidden in the menu, so we only check it on desktop
+      if (!isMobile) {
+        await expect(bookshelfPage.bookTitleHeading(bookWithEBook.title)).toBeVisible();
+      }
+    });
+    await test.step("Verify Expand all and Collapse all features in Bookshelf", async () => {
+      if (isMobile) {
+        await bookshelfPage.tocButton.click();
+      }
+
+      await expect(bookshelfPage.tocPanel).toBeVisible();
+      await expect(bookshelfPage.tocPanel.getByRole("button").first()).toBeVisible();
+
+      await bookshelfPage.expandAllButton.click();
+      await expect(bookshelfPage.expandedTocItems.first()).toBeVisible();
+
+      await bookshelfPage.collapseAllButton.click();
+
+      // wait for the number of expanded elements to become 0 (clean launch) or 1 (saved progress)
+      await expect(async () => {
+        const count = await bookshelfPage.expandedTocItems.count();
+        expect(count).toBeLessThanOrEqual(1);
+      }).toPass({ timeout: 10000 });
+    });
+
+    await test.step("Verify chapter title synchronization and sub-chapter navigation", async () => {
+      await bookshelfPage.expandAllButton.click();
+
+      await bookshelfPage.tocChapterLink(/Go to Chapter 1 Physics of/i).click();
+
+      await expect(bookshelfPage.readerFrameHeading("Physics of Ultrasound")).toBeVisible();
+
+      await bookshelfPage.tocSubChapterLink("Instrumentation").click();
+
+      await expect(bookshelfPage.readerFrameHeading("Instrumentation", true)).toBeVisible();
+    });
+  });
+
+  test("Documents page @documentspage", async ({ libraryPage, page, documentsContentPage }) => {
+    let expectedDocumentId: string;
+
+    await test.step("Open Documents page", async () => {
+      const mediaListResponsePromise = page.waitForResponse(
+        (response) =>
+          response.url().includes("/V2/ancillary-contents-metadata?offset") &&
+          response.request().method() === "GET"
+      );
+
+      await libraryPage.entitlementItem.filter({ hasText: bookWithDocuments.title }).click();
+      await libraryPage.modal.entitlementDocumentsLink.click();
+
+      const response = await mediaListResponsePromise;
+      const mediaListData = await response.json();
+      expectedDocumentId = mediaListData.metadata[0].id;
+    });
+
+    await test.step("Check the main content heading", async () => {
+      await expect(documentsContentPage.mainHeading(bookWithDocuments.title)).toBeVisible();
+    });
+
+    await test.step("Check that documents list is displayed and not empty", async () => {
+      await expect(documentsContentPage.documentItems.first()).toBeVisible();
+    });
+
+    await test.step("Verify document download and file validity", async () => {
+      const [download] = await Promise.all([
+        page.waitForEvent("download"),
+        documentsContentPage.documentItems.first().click()
+      ]);
+      expect(download).toBeTruthy();
+
+      // 1. Check that UI passed the correct file name
+      const downloadedFilename = download.suggestedFilename();
+      expect(downloadedFilename).toContain(expectedDocumentId);
+
+      // 2. Get the direct file URL and cancel the download in the browser
+      const fileUrl = download.url();
+      await download.cancel();
+
+      // 3. Make a hidden HEAD request to make sure the file actually exists and is not empty
+      const headResponse = await page.request.head(fileUrl);
+      expect(headResponse.status()).toBe(200);
+
+      const headers = headResponse.headers();
+      const contentLength = parseInt(headers["content-length"] || "0", 10);
+      expect(contentLength).toBeGreaterThan(0);
+    });
+  });
+  test("External links page @externallinkspage", async ({
+    libraryPage,
+    page,
+    context,
+    externalLinksContentPage
+  }) => {
+    await test.step("Open External links page", async () => {
+      await libraryPage.entitlementItem.filter({ hasText: bookWithExternalLinks.title }).click();
+      await libraryPage.modal.entitlementExternalLinksLink.click();
+    });
+
+    await test.step("Check the intermediate page title", async () => {
+      await expect(externalLinksContentPage.pageTitle(bookWithExternalLinks.title)).toBeVisible();
+    });
+
+    await test.step("Check that the external links list is displayed", async () => {
+      await expect(externalLinksContentPage.externalLinkItems.first()).toBeVisible();
+    });
+
+    await test.step("Open external link in a new tab", async () => {
+      const [newPage] = await Promise.all([
+        context.waitForEvent("page"),
+        externalLinksContentPage.externalLinkItems.first().click()
+      ]);
+
+      await test.step("Verify the new tab URL", async () => {
+        await expect(newPage).toHaveURL(/coursewareobjects\.elsevier\.com/);
+      });
+
+      await newPage.close();
     });
   });
 });

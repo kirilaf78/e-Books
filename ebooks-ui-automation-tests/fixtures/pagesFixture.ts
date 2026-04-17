@@ -3,6 +3,8 @@ import MyAccountPage from "@pages/common/MyAccountPage";
 import AccessCodeHelpPage from "@pages/ebooks/AccessCodeHelpPage";
 import {
   AudioContentPage,
+  DocumentsContentPage,
+  ExternalLinksContentPage,
   ImageContentPage,
   PdfContentPage,
   VideoContentPage
@@ -30,6 +32,8 @@ type ElsevierPages = {
   audioContentPage: AudioContentPage;
   imageContentPage: ImageContentPage;
   pdfContentPage: PdfContentPage;
+  documentsContentPage: DocumentsContentPage;
+  externalLinksContentPage: ExternalLinksContentPage;
   migrationSettingsPage: MigrationSettingsPage;
   notFoundPage: NotFoundPage;
 };
@@ -171,6 +175,14 @@ export const test = baseTest.extend<ElsevierPages>({
   pdfContentPage: async ({ page }, use) => {
     const pdfContentPage = new PdfContentPage(page);
     await use(pdfContentPage);
+  },
+  documentsContentPage: async ({ page }, use) => {
+    const documentsContentPage = new DocumentsContentPage(page);
+    await use(documentsContentPage);
+  },
+  externalLinksContentPage: async ({ page }, use) => {
+    const externalLinksContentPage = new ExternalLinksContentPage(page);
+    await use(externalLinksContentPage);
   },
   migrationSettingsPage: async ({ page }, use) => {
     const migrationSettingsPage = new MigrationSettingsPage(page);
