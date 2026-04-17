@@ -89,8 +89,14 @@ export class PdfContentPage extends ContentPage {
 }
 
 export class DocumentsContentPage extends ContentPage {
+  /** Locator for each downloadable document button in the sidebar list */
+  readonly documentItems: Locator;
+
   constructor(page: Page) {
     super(page);
+    this.documentItems = this.page
+      .getByRole("navigation", { name: "All Documents" })
+      .getByRole("button");
   }
 
   /** Returns a locator for the main central heading with format "BookTitle - Documents" */

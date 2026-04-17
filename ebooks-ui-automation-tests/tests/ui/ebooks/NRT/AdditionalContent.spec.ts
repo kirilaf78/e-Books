@@ -524,13 +524,13 @@ test.describe("Additional Content @ui @ebooks @nrt @additionalcontent", () => {
     });
 
     await test.step("Check that documents list is displayed and not empty", async () => {
-      await expect(documentsContentPage.contentMenu.body.getByRole("button").first()).toBeVisible();
+      await expect(documentsContentPage.documentItems.first()).toBeVisible();
     });
 
     await test.step("Verify document download and file validity", async () => {
       const [download] = await Promise.all([
         page.waitForEvent("download"),
-        documentsContentPage.contentMenu.body.getByRole("button").first().click()
+        documentsContentPage.documentItems.first().click()
       ]);
       expect(download).toBeTruthy();
 
